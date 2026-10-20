@@ -71,8 +71,8 @@
     JFCustomWidget.subscribe("ready", async () => {
       try {
         const settings = JFCustomWidget.getWidgetSettings() || {};
-        const formID = String(settings.IDform || "").trim();
-        const questionID = String(settings.IDquestion || "").trim();
+        const formID = String(settings.IDform || "262011505432341").trim();
+        const questionID = String(settings.IDquestion || "25").trim();
 
         if (!/^\d+$/.test(formID) || !/^\d+$/.test(questionID)) {
           showError("Configuração inválida.");
