@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Última resposta Jotform</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    #lastAnswer {
+      box-sizing: border-box;
+      width: 50%;
+      padding: 0.625rem;
+      border: 1px solid #c7c7c7;
+      border-radius: 4px;
+      background: #f7f7f7;
+      color: #333;
+      font: inherit;
+    }
+
+    #statusMessage {
+      min-height: 1.2em;
+      margin-top: 0.375rem;
+      color: #b42318;
+      font-size: 0.8rem;
+    }
+  </style>
+  <script src="//js.jotform.com/JotFormCustomWidget.min.js"></script>
+</head>
+<body>
+  <input type="text" id="lastAnswer" readonly>
+  <div id="statusMessage" role="status" aria-live="polite"></div>
+
+  <script>
+    const lastAnswer = document.getElementById("lastAnswer");
+    const statusMessage = document.getElementById("statusMessage");
+
+    function showError(message) {
+      lastAnswer.value = "";
+      statusMessage.textContent = message;
+    }
+
+    function normalizeAnswer(value) {
+      if (value === null || value === undefined) {
+        return "";
+      }
+
+      if (Array.isArray(value)) {
+        return value
+          .map(normalizeAnswer)
+          .filter((item) => item.trim() !== "")
+          .join(", ");
+      }
+
+      if (typeof value === "object") {
+        return Object.entries(value)
+          .map(([key, item]) => {
+            const text = normalizeAnswer(item);
+            return text.trim() === "" ? "" : `${key}: ${text}`;
+          })
+          .filter(Boolean)
+          .join(", ");
+      }
+
+      return String(value);
+    }
+
+    JFCustomWidget.subscribe("ready", async () => {
+      try {
+        const settings = JFCustomWidget.getWidgetSettings() || {};
+        const formID = String(settings.IDform || "").trim();
+        const questionID = String(settings.IDquestion || "").trim();
+
+        if (!/^\d+$/.test(formID) || !/^\d+$/.test(questionID)) {
+          showError("Configuração inválida.");
+          return;
+        }
+
+        statusMessage.textContent = "";
+        const response = await fetch(`/api/submissions?formID=${encodeURIComponent(formID)}`);
+
+        if (!response.ok) {
+          showError("Erro de comunicação com a API.");
+          return;
+        }
+
+        const data = await response.json();
+        const submission = data && data.submission;
+
+        if (!submission) {
+          showError("Nenhuma submissão encontrada.");
+          return;
+        }
+
+        const answers = submission.answers;
+        if (!answers || typeof answers !== "object" || !Object.prototype.hasOwnProperty.call(answers, questionID)) {
+          showError("Campo de origem inexistente.");
+          return;
+        }
+
+        const field = answers[questionID];
+        if (!field || typeof field !== "object" || !Object.prototype.hasOwnProperty.call(field, "answer")) {
+          showError("Campo de origem sem resposta.");
+          return;
+        }
+
+        const value = normalizeAnswer(field.answer);
+        if (value.trim() === "") {
+          showError("Campo de origem sem resposta.");
+          return;
+        }
+
+        lastAnswer.value = value;
+        statusMessage.textContent = "";
+      } catch (error) {
+        showError("Erro de comunicação com a API.");
+      } finally {
+        JFCustomWidget.setReady();
+      }
+    });
+
+    JFCustomWidget.subscribe("submit", () => {
+      JFCustomWidget.sendSubmit({
+        value: document.getElementById("lastAnswer").value
+      });
+    });
+  </script>
+</body>
+</html>

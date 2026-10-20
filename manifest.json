@@ -1,0 +1,18 @@
+{
+  "name": "Última Resposta Jotform",
+  "description": "Preenche um campo de texto com a resposta da submissão mais recente.",
+  "icon": "textbox",
+  "properties": [
+    {
+      "name": "IDform",
+      "type": "text",
+      "label": "ID do Formulário de Origem"
+    },
+    {
+      "name": "IDquestion",
+      "type": "text",
+      "label": "ID do Campo de Origem"
+    }
+  ],
+  "tags": ["jotform", "texto"]
+}
