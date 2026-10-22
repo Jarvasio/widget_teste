@@ -5,12 +5,12 @@
   "properties": [
     {
       "name": "IDform",
-      "type": "text",
+      "type": "number",
       "label": "ID do Formulário de Origem"
     },
     {
       "name": "IDquestion",
-      "type": "text",
+      "type": "number",
       "label": "ID do Campo de Origem"
     }
   ],
